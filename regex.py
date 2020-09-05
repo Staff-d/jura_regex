@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
 
 # Für Erläuterung der Regex siehe README.md
 p = re.compile(r""" # Die Regex wird in p kompiliert
@@ -15,20 +16,22 @@ p = re.compile(r""" # Die Regex wird in p kompiliert
 (?P<gesetz>\b[A-Z][A-Za-z]*[A-Z](?:(?P<buch>(?:\s|\b)[XIV]+)?))
 """, re.VERBOSE)
 
-Teststring = """Hier zu überprüfenden Text einfügen"""
+if sys.argv[1] == '--':
+    Teststring = sys.stdin.read()
+else:
+    Teststring = ''
+    for arg in sys.argv[1:]:
+        with open(arg, 'r') as h:
+            Teststring += h.read()
 
-alle_treffer = p.finditer(Teststring)
-liste_der_treffer = ""
-liste_der_gesetze = {} #Dictionary, sodass jedes Gesetz nur einmal erfasst wird
+alle_treffer = list(p.finditer(Teststring.replace('\n', ' ')))
 
-for treffer in alle_treffer:
-    liste_der_treffer = liste_der_treffer + "\t" + treffer.group() + "\n"
-    liste_der_gesetze[treffer.group('gesetz')] = 0 # Wir brauchen nur das Gesetz als Key, Value kann 0 sein
+liste_der_treffer = '\n'.join(map(lambda t: t.group(),alle_treffer))
+liste_der_gesetze = set(list(map(lambda t: t.group('gesetz'),alle_treffer)))
 
-
-
-print(f"Folgende Treffer gibt es:\n {liste_der_treffer}")
-print(f"Im Einzelnen konnten die folgenden Gesetze erkannt werden:")
-
-for x in liste_der_gesetze:
-    print(x + ' ')
+print(liste_der_treffer)
+# print(f"Folgende Treffer gibt es:\n{liste_der_treffer}")
+# print(f"Im Einzelnen konnten die folgenden Gesetze erkannt werden:")
+#
+# for x in liste_der_gesetze:
+#     print(x.strip() + ' ')
